@@ -1,0 +1,1 @@
+python main.py --model mini_deit_tiny_patch16_224 --batch-size 128 --data-path ../../../deit/IMG --resume mini_deit_tiny_patch16_224.pth --eval
