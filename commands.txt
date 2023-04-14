@@ -1,0 +1,45 @@
+So generally, there are two main models that we have to quantize. The first is DeiT and the second is Swin. 
+Shilin and Amir will run the quantization for Swin model and you guys can pick DeiT.
+
+
+
+
+Steps:
+
+
+0:
+Download and unzip to /IMG path:
+https://drive.google.com/file/d/1aeQo35-s0fDOk7U7ZJMks1P30XBNL-u0/view?usp=sharing
+
+
+
+1:
+Download the pretrained models (.pth files) from:
+miniDeiT: https://github.com/microsoft/Cream/tree/main/MiniViT/Mini-DeiT
+miniSwin: https://github.com/microsoft/Cream/tree/main/MiniViT/Mini-Swin
+The downloaded file must be in the same directory that quant.py file is.
+
+
+2:
+conda create --name minivit --file requirements.txt
+
+
+
+3:
+change directory to Mini-DeiT or Mini-Swin and then execute the quantization script with specified bit-width as follows in the next step.
+
+
+
+4:
+Lines to change for bit-width variation: MiniDeit 390, MiniSwin 209
+
+python quant.py --device cuda:0 --model mini_deit_base_patch16_384 --batch-size 128 --data-path /home/amir/ai/deit/IMG --output_dir ./outputs --resume mini_deit_base_patch16_384.pth --eval --input-size 384
+
+In the above command: the argument after --resume indicates what weights must be loaded to the model (the fiel that you download in step 1).
+                      the argument after --model specifies the model type, whether it's swin, deit, small, base and so on ...
+                      the argiment after --data-path specifies the path to the validation set which is the IMG directory in our case
+                      the argument after --input-size specifies the input image size :) like you didn't already know! It mus be 224 or 384 which is specified in the model name that you download
+
+
+**Remarks: if you faced an error like: memory allocation error or ' kernel killed' just reduce the batch size: --batch-size 128 (mine is 128 you can reduce on powers of two 64, 32, and so on)
+
