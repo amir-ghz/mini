@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from functools import partial
+import quant_util
 
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.models.helpers import load_pretrained
@@ -86,11 +87,14 @@ class MiniAttention(nn.Module):
     def forward(self, x):
         # print("HIII")
         B, N, C = x.shape
+        x = quant_util.quantizie(x, quant_util.activation_bw)
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)
 
         q *= self.scale
 
+        q = quant_util.quantizie(q, quant_util.activation_bw)
+        k = quant_util.quantizie(k, quant_util.activation_bw)
         attn = (q @ k.transpose(-2, -1))
 
         # image relative position on keys
@@ -103,16 +107,22 @@ class MiniAttention(nn.Module):
             attn += self.rpe_q(k * self.scale).transpose(2, 3)
 
         if self.conv_l is not None:
+            attn = quant_util.quantizie(attn, quant_util.activation_bw)
             attn = self.conv_l(attn)
+
 
         attn = attn.softmax(dim=-1)
 
         if self.conv_w is not None:
+            attn = quant_util.quantizie(attn, quant_util.activation_bw)
             attn = self.conv_w(attn)
+            
 
         attn = self.attn_drop(attn)
 
+        v = quant_util.quantizie(v, quant_util.activation_bw)
         out = attn @ v
+        out = quant_util.quantizie(out, quant_util.activation_bw)
 
         # image relative position on values
         if self.rpe_v is not None:
@@ -121,6 +131,7 @@ class MiniAttention(nn.Module):
 
         x = out.transpose(1, 2).reshape(B, N, C)
         x = self.proj(x)
+        x = quant_util.quantizie(x, quant_util.activation_bw)
         x = self.proj_drop(x)
         return x
 
@@ -304,8 +315,10 @@ class VisionTransformer(nn.Module):
 
         for blk in self.blocks:
             x = blk(x)
-
+        
         x = self.norm(x)
+        x = quant_util.quantizie(x, quant_util.activation_bw)
+
         if self.cls_token is not None:
             return x[:, 0]
         else:
@@ -315,6 +328,8 @@ class VisionTransformer(nn.Module):
         x = self.forward_features(x)
         if self.avgpool is not None:
             x = self.avgpool(x.transpose(1, 2))  # (B, C, 1)
+            x = quant_util.quantizie(x, quant_util.activation_bw)
             x = torch.flatten(x, 1)
         x = self.head(x)
+        x = quant_util.quantizie(x, quant_util.activation_bw)
         return x

@@ -13,7 +13,7 @@ https://drive.google.com/file/d/1aeQo35-s0fDOk7U7ZJMks1P30XBNL-u0/view?usp=shari
 
 
 
-1:
+1: (you can skip this step, see the end of this document for ready-to-paste commands)
 Download the pretrained models (.pth files) from:
 miniDeiT: https://github.com/microsoft/Cream/tree/main/MiniViT/Mini-DeiT
 miniSwin: https://github.com/microsoft/Cream/tree/main/MiniViT/Mini-Swin
@@ -26,12 +26,12 @@ conda create --name minivit --file requirements.txt
 
 
 3:
-change directory to Mini-DeiT or Mini-Swin and then execute the quantization script with specified bit-width as follows in the next step.
+change directory to Mini-DeiT (John, Austin and Curtis) or Mini-Swin (Shilin and Amir) and then execute the quantization script with specified bit-width as follows in the next step.
 
 
 
 4:
-Lines to change for bit-width variation: MiniDeit 390, MiniSwin 209
+Lines to change for bit-width variation: MiniDeit 396, MiniSwin 210
 
 python quant.py --device cuda:0 --model mini_deit_base_patch16_384 --batch-size 128 --data-path /home/amir/ai/deit/IMG --output_dir ./outputs --resume mini_deit_base_patch16_384.pth --eval --input-size 384
 
@@ -42,4 +42,37 @@ In the above command: the argument after --resume indicates what weights must be
 
 
 **Remarks: if you faced an error like: memory allocation error or ' kernel killed' just reduce the batch size: --batch-size 128 (mine is 128 you can reduce on powers of two 64, 32, and so on)
+
+
+
+
+######################## mini-DeiT: change IMG_PATH accordingly
+
+Mini-DeiT-Ti:
+python quant.py --device cuda:0 --model mini_deit_tiny_patch16_224 --batch-size 128 --data-path IMG_PATH --output_dir ./outputs --resume https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_tiny_patch16_224.pth --eval --input-size 224
+
+Mini-DeiT-S:
+python quant.py --device cuda:0 --model mini_deit_small_patch16_224 --batch-size 128 --data-path IMG_PATH --output_dir ./outputs --resume https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_small_patch16_224.pth --eval --input-size 224
+
+Mini-DeiT-B:
+python quant.py --device cuda:0 --model mini_deit_base_patch16_224 --batch-size 128 --data-path IMG_PATH --output_dir ./outputs --resume https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_base_patch16_224.pth --eval --input-size 224
+
+Mini-DeiT-B-384:
+python quant.py --device cuda:0 --model mini_deit_base_patch16_384 --batch-size 128 --data-path IMG_PATH --output_dir ./outputs --resume https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_base_patch16_384.pth --eval --input-size 224
+
+
+######################## mini-Swin: change IMG_PATH accordingly
+
+Mini-Swin-Ti:
+python quant.py --cfg configs/swin_tiny_patch4_window7_224_minivit_sharenum6.yaml --data-path IMG_PATH --batch-size 64 --is_sep_layernorm --is_transform_ffn --is_transform_heads --resume https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini-swin-tiny-12m.pth --eval
+
+
+Mini-Swin-S: 
+python quant.py --cfg configs/swin_small_patch4_window7_224_minivit_sharenum2.yaml --data-path  IMG_PATH --batch-size 64 --is_sep_layernorm --is_transform_ffn --is_transform_heads --resume https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini-swin-small-26m.pth --eval
+
+Mini-Swin-B: 
+python quant.py --cfg configs/swin_base_patch4_window7_224_minivit_sharenum2.yaml --data-path  IMG_PATH --batch-size 64 --is_sep_layernorm --is_transform_ffn --is_transform_heads --resume https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini-swin-base-46m.pth --eval
+
+Mini-Swin-B-384: 
+python quant.py --cfg configs/swin_base_patch4_window7_224to384_minivit_sharenum2_adamw.yaml --data-path  IMG_PATH --batch-size 32 --is_sep_layernorm --is_transform_ffn --is_transform_heads --resume https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini-swin-base-224to384.pth --eval
 

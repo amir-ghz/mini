@@ -6,6 +6,7 @@ import torch
 import torch.backends.cudnn as cudnn
 import json
 import os
+import quant_util
 
 from pathlib import Path
 
@@ -386,8 +387,13 @@ def main(args):
 
 
     if args.eval:
+
+        # activation bit width set --> the below line will set activation quantization bit width uniformly among all layers (check quant_util file for more info)
+        quant_util.activation_bw = 16
+
+
         model.to('cpu')
-        bit_width = 6
+        bit_width = 8
         for name, param in model.named_parameters():
 
             min = torch.min(param.data).item()
@@ -404,6 +410,7 @@ def main(args):
 
 
 if __name__ == '__main__':
+    quant_util.init()
     parser = argparse.ArgumentParser('DeiT training and evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
     if args.output_dir:

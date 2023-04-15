@@ -21,12 +21,11 @@ class AverageMeter:
 
 
     def sync(self):
-        rank = dist.get_rank()
-        world_size = dist.get_world_size()
+
         val = torch.tensor(self.val).cuda()
         sum_v = torch.tensor(self.sum).cuda()
         count = torch.tensor(self.count).cuda()
-        self.val = reduce_tensor(val, world_size).item()
-        self.sum = reduce_tensor(sum_v, 1).item()
-        self.count = reduce_tensor(count, 1).item()
-        self.avg = self.sum / max(1, self.count)
+        self.val = val
+        self.sum += val
+        self.count = 1
+        self.avg = self.sum / 1
