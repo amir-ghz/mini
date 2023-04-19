@@ -11,7 +11,7 @@ Mini-DeiT/weights
 
 # C extensions
 *.so
-
+temp.pt
 # Distribution / packaging
 .Python
 build/
