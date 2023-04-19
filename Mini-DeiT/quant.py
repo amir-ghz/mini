@@ -389,20 +389,7 @@ def main(args):
     if args.eval:
 
 
-        #range(0, len(dataset_val), 10)
-        sub_set = torch.utils.data.Subset(dataset_val, list(range(0, len(dataset_val), 10)))
 
-        # indices = np.random.permutation(len(dataset_val))[:5000]
-
-        # sub_set = torch.utils.data.Subset(dataset_val, indices)
-
-        samples = torch.utils.data.DataLoader(
-                sub_set, sampler=sampler_val,
-                batch_size=int(1.5 * args.batch_size),
-                num_workers=args.num_workers,
-                pin_memory=args.pin_mem,
-                drop_last=False
-            )
 
 
         # activation bit width set --> the below line will set activation quantization bit width uniformly among all layers (check quant_util file for more info)
@@ -424,7 +411,7 @@ def main(args):
 
             model.to(device)
             model.eval()
-            test_stats = evaluate(samples, model, device)
+            test_stats = evaluate(data_loader_val, model, device)
             print("for bit_width: ", bit_width, "-->", test_stats['acc1'])
             # print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
         return
