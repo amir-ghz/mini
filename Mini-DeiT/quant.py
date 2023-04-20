@@ -412,28 +412,40 @@ def main(args):
             for i in range(len(model_creds)):
                 if model_creds[i][0] == block:
                     temp.append(model_creds[i][1])
+            layer_list.append(temp)
 
-        # Now layer list contain the clustered weights. Hooray!
+        print(len(layer_list))
+        print(layer_list[0])
 
-            
-        #     for bit_width in range(3, 16):
-        #         model.load_state_dict(torch.load('temp.pt'))
-        #         model.to('cpu')
+        # Now layer list contain the clustered weights in each block. Hooray!
 
-        #         for name, param in model.named_parameters():
+        
 
-        #             if 'blocks.0' in name:
+        resil = []
 
-        #                 print(name)
+        for block in layer_list:
+            for bit_width in range(3, 17):
 
-        #             param.data = quant_util.quantizie(param.data, bit_width)
+                acc_sum = 0
+                model.load_state_dict(torch.load('temp.pt'))
+                model.to('cpu')
 
-        #         model.to(device)
-        #         model.eval()
-        #         test_stats = evaluate(data_loader_val, model, device)
-        #         print("for bit_width: ", bit_width, "-->", test_stats['acc1'])
-        #         # print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
-        #     return
+                for name, param in model.named_parameters():
+                    if name in block:
+                        param.data = quant_util.quantizie(param.data, bit_width)
+
+                model.to(device)
+                model.eval()
+                test_stats = evaluate(data_loader_val, model, device)
+                print("for bit_width: ", bit_width, "-->", test_stats['acc1'])
+                acc_sum += test_stats['acc1']
+
+            resil.append([block, acc_sum/14])
+
+        print(resil)
+        torch.save(resil, 'resil.pt')
+                # print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
+        return
 
 
 
