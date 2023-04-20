@@ -393,10 +393,22 @@ def main(args):
 
 
         # activation bit width set --> the below line will set activation quantization bit width uniformly among all layers (check quant_util file for more info)
+        model.to(device)
+        model.eval()
+        test_stats = evaluate(data_loader_val, model, device)
+        base_acc = test_stats['acc1']
+        threshold = 1
+
         quant_util.activation_bw = 16
 
+        for name, param in model.named_parameters():
+            param.data = quant_util.quantizie(param.data, 16)
 
+        model.eval()
         torch.save(model.state_dict(), 'temp.pt')
+
+
+
 
         # model preprocessing --> each block has 22 weifht tensor
         model_creds = []
@@ -419,30 +431,79 @@ def main(args):
 
         # Now layer list contain the clustered weights in each block. Hooray!
 
-        
 
-        resil = []
+        seq_acc = []
+        for block in range(len(layer_list)):
+            seq_acc.append([block, 16])
+
 
         for block in range(len(layer_list)):
-            for bit_width in range(3, 17):
-
-                model.load_state_dict(torch.load('temp.pt'))
-                model.to('cpu')
-
+            model.load_state_dict(torch.load('temp.pt'))
+            model.to('cpu')
+            for bit_width in reversed(range(3, 16)):
+                print("Block: ", block, "--> ", bit_width)
                 for name, param in model.named_parameters():
                     if name in layer_list[block]:
                         param.data = quant_util.quantizie(param.data, bit_width)
-
+            
                 model.to(device)
                 model.eval()
                 test_stats = evaluate(data_loader_val, model, device)
-                print("for bit_width: ", bit_width, "-->", test_stats['acc1'])
+                if test_stats['acc1'] > base_acc - threshold:
+                    torch.save(model.state_dict(), 'temp.pt')
+                    seq_acc[block][1] = bit_width
+                    
+                else:
+                    model.load_state_dict(torch.load('temp.pt'))
+                    seq_acc[block][1] = bit_width-1
+                    model.to(device)
+                    model.eval()
+                    test_stats = evaluate(data_loader_val, model, device)
+                    print("base acc is ", base_acc)
+                    print("final acc is: ", test_stats['acc1'])
+                    print(seq_acc)
+                    break
+        print(seq_acc)
+        
 
-                resil.append([block, bit_width, test_stats['acc1']]) # resil is of (block: int, bit_width: int, accuracy: float)
-            print(resil)
 
-        torch.save(resil, 'resil.pt')
-                # print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
+
+        # benefit:
+        unquantized_size = 0
+        for name, param in model.named_parameters():
+            unquantized_size += torch.numel(param.data)
+        
+
+        quantized_size = 0
+        for block in range(len(seq_acc)):
+            for name, param in model.named_parameters():
+                if name in layer_list[block]:
+                    quantized_size += torch.numel(param.data)*seq_acc[block][1]
+
+        print("benefit is: ", (unquantized_size*32)/quantized_size)
+
+        # resil = []
+
+        # for block in range(len(layer_list)):
+        #     for bit_width in range(3, 17):
+
+        #         model.load_state_dict(torch.load('temp.pt'))
+        #         model.to('cpu')
+
+        #         for name, param in model.named_parameters():
+        #             if name in layer_list[block]:
+        #                 param.data = quant_util.quantizie(param.data, bit_width)
+
+        #         model.to(device)
+        #         model.eval()
+        #         test_stats = evaluate(data_loader_val, model, device)
+        #         print("for bit_width: ", bit_width, "-->", test_stats['acc1'])
+
+        #         resil.append([block, bit_width, test_stats['acc1']]) # resil is of (block: int, bit_width: int, accuracy: float)
+        #     print(resil)
+
+        # torch.save(resil, 'resil.pt')
+        #         # print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
         return
 
 
