@@ -76,3 +76,7 @@ python quant.py --cfg configs/swin_base_patch4_window7_224_minivit_sharenum2.yam
 Mini-Swin-B-384: 
 python quant.py --cfg configs/swin_base_patch4_window7_224to384_minivit_sharenum2_adamw.yaml --data-path  IMG_PATH --batch-size 32 --is_sep_layernorm --is_transform_ffn --is_transform_heads --resume https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini-swin-base-224to384.pth --eval
 
+####################
+
+
+python -m torch.distributed.launch --nproc_per_node=4 --use_env quant.py --model mini_deit_small_patch16_224 --batch-size 128 --data-path /home/amir/Desktop/deit/IMG --output_dir ./outputs --resume https://github.com/DominickZhang/MiniViT-model-zoo/releases/download/v1.0.0/mini_deit_small_patch16_224.pth --eval --input-size 224

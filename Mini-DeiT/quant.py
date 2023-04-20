@@ -395,30 +395,45 @@ def main(args):
         # activation bit width set --> the below line will set activation quantization bit width uniformly among all layers (check quant_util file for more info)
         quant_util.activation_bw = 16
 
-        # for name, param in model.named_parameters():
-        #     if 'block.mlp.fc2.bias' in name:
-        #         print(name)
 
         torch.save(model.state_dict(), 'temp.pt')
 
-        for bit_width in range(3, 16):
-            model.load_state_dict(torch.load('temp.pt'))
-            model.to('cpu')
+        # model preprocessing --> each block has 22 weifht tensor
+        model_creds = []
+        for name, param in model.named_parameters():
+            for i in range(0, 24):
+                if "blocks."+str(i) in name:
+                    model_creds.append([i, name])
+        
+        layer_list = []
 
-            for name, param in model.named_parameters():
+        for block in range(0, int(len(model_creds)/22)):
+            temp = []
+            for i in range(len(model_creds)):
+                if model_creds[i][0] == block:
+                    temp.append(model_creds[i][1])
 
-                if 'blocks.0' in name:
+        # Now layer list contain the clustered weights. Hooray!
 
-                    print(name)
+            
+        #     for bit_width in range(3, 16):
+        #         model.load_state_dict(torch.load('temp.pt'))
+        #         model.to('cpu')
 
-                param.data = quant_util.quantizie(param.data, bit_width)
+        #         for name, param in model.named_parameters():
 
-            model.to(device)
-            model.eval()
-            test_stats = evaluate(data_loader_val, model, device)
-            print("for bit_width: ", bit_width, "-->", test_stats['acc1'])
-            # print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
-        return
+        #             if 'blocks.0' in name:
+
+        #                 print(name)
+
+        #             param.data = quant_util.quantizie(param.data, bit_width)
+
+        #         model.to(device)
+        #         model.eval()
+        #         test_stats = evaluate(data_loader_val, model, device)
+        #         print("for bit_width: ", bit_width, "-->", test_stats['acc1'])
+        #         # print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
+        #     return
 
 
 
