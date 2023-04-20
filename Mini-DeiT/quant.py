@@ -393,11 +393,11 @@ def main(args):
 
 
         # activation bit width set --> the below line will set activation quantization bit width uniformly among all layers (check quant_util file for more info)
-        model.to(device)
-        model.eval()
-        test_stats = evaluate(data_loader_val, model, device)
-        base_acc = test_stats['acc1']
-        threshold = 1
+        # model.to(device)
+        # model.eval()
+        # test_stats = evaluate(data_loader_val, model, device)
+        # base_acc = test_stats['acc1']
+        # threshold = 1
 
         quant_util.activation_bw = 16
 
@@ -426,44 +426,44 @@ def main(args):
                     temp.append(model_creds[i][1])
             layer_list.append(temp)
 
-        print(len(layer_list))
-        print(layer_list[0])
+        # print(len(layer_list))
+        # print(layer_list[0])
 
-        # Now layer list contain the clustered weights in each block. Hooray!
-
-
-        seq_acc = []
-        for block in range(len(layer_list)):
-            seq_acc.append([block, 16])
+        # # Now layer list contain the clustered weights in each block. Hooray!
 
 
-        for block in [5, 4, 1, 3, 2, 0]: # range(len(layer_list)):
-            model.load_state_dict(torch.load('temp.pt'))
-            model.to('cpu')
-            for bit_width in reversed(range(3, 10)):
-                print("Block: ", block, "--> ", bit_width)
-                for name, param in model.named_parameters():
-                    if name in layer_list[block]:
-                        param.data = quant_util.quantizie(param.data, bit_width)
+        # seq_acc = []
+        # for block in range(len(layer_list)):
+        #     seq_acc.append([block, 16])
+
+
+        # for block in range(len(layer_list)):
+        #     model.load_state_dict(torch.load('temp.pt'))
+        #     model.to('cpu')
+        #     for bit_width in reversed(range(3, 10)):
+        #         print("Block: ", block, "--> ", bit_width)
+        #         for name, param in model.named_parameters():
+        #             if name in layer_list[block]:
+        #                 param.data = quant_util.quantizie(param.data, bit_width)
             
-                model.to(device)
-                model.eval()
-                test_stats = evaluate(data_loader_val, model, device)
-                if test_stats['acc1'] > base_acc - threshold:
-                    torch.save(model.state_dict(), 'temp.pt')
-                    seq_acc[block][1] = bit_width
+        #         model.to(device)
+        #         model.eval()
+        #         test_stats = evaluate(data_loader_val, model, device)
+        #         if test_stats['acc1'] > base_acc - threshold:
+        #             torch.save(model.state_dict(), 'temp.pt')
+        #             seq_acc[block][1] = bit_width
                     
-                else:
-                    model.load_state_dict(torch.load('temp.pt'))
-                    seq_acc[block][1] = bit_width-1
-                    model.to(device)
-                    model.eval()
-                    test_stats = evaluate(data_loader_val, model, device)
-                    print("base acc is ", base_acc)
-                    print("final acc is: ", test_stats['acc1'])
-                    print(seq_acc)
-                    break
-        print(seq_acc)
+        #         else:
+        #             model.load_state_dict(torch.load('temp.pt'))
+        #             seq_acc[block][1] = bit_width-1
+        #             model.to(device)
+        #             model.eval()
+        #             test_stats = evaluate(data_loader_val, model, device)
+        #             print("base acc is ", base_acc)
+        #             print("final acc is: ", test_stats['acc1'])
+        #             print(seq_acc)
+        #             break
+        # print(seq_acc)
         
 
 
@@ -475,6 +475,7 @@ def main(args):
         
 
         quantized_size = 0
+        seq_acc = [[0, 5], [1, 5], [2, 5], [3, 8], [4, 6], [5, 6]]
         for block in range(len(seq_acc)):
             for name, param in model.named_parameters():
                 if name in layer_list[block]:
