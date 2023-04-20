@@ -437,10 +437,10 @@ def main(args):
             seq_acc.append([block, 16])
 
 
-        for block in range(len(layer_list)):
+        for block in [5, 4, 1, 3, 2, 0]: # range(len(layer_list)):
             model.load_state_dict(torch.load('temp.pt'))
             model.to('cpu')
-            for bit_width in reversed(range(3, 16)):
+            for bit_width in reversed(range(3, 10)):
                 print("Block: ", block, "--> ", bit_width)
                 for name, param in model.named_parameters():
                     if name in layer_list[block]:
