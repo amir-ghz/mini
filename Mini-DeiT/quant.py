@@ -395,6 +395,10 @@ def main(args):
         # activation bit width set --> the below line will set activation quantization bit width uniformly among all layers (check quant_util file for more info)
         quant_util.activation_bw = 16
 
+        # for name, param in model.named_parameters():
+        #     if 'block.mlp.fc2.bias' in name:
+        #         print(name)
+
         torch.save(model.state_dict(), 'temp.pt')
 
         for bit_width in range(3, 16):
