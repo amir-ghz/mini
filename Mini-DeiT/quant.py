@@ -423,26 +423,24 @@ def main(args):
 
         resil = []
 
-        for block in layer_list:
+        for block in range(len(layer_list)):
             for bit_width in range(3, 17):
 
-                acc_sum = 0
                 model.load_state_dict(torch.load('temp.pt'))
                 model.to('cpu')
 
                 for name, param in model.named_parameters():
-                    if name in block:
+                    if name in layer_list[block]:
                         param.data = quant_util.quantizie(param.data, bit_width)
 
                 model.to(device)
                 model.eval()
                 test_stats = evaluate(data_loader_val, model, device)
                 print("for bit_width: ", bit_width, "-->", test_stats['acc1'])
-                acc_sum += test_stats['acc1']
 
-            resil.append([block, acc_sum/14])
+                resil.append([block, bit_width, test_stats['acc1']]) # resil is of (block: int, bit_width: int, accuracy: float)
+            print(resil)
 
-        print(resil)
         torch.save(resil, 'resil.pt')
                 # print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
         return
